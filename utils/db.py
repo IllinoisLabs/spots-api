@@ -12,7 +12,7 @@ from pymongo import MongoClient
 from pymongo.database import Database
 from dotenv import load_dotenv
 
-from models import Document, Spot
+from .models import Document, Spot
 
 load_dotenv()
 
@@ -42,6 +42,7 @@ def insert_one(conn: Connection, collection: str, document: Document):
 
 
 if __name__ == "__main__":
+    from models import Document, Spot
     conn = Connection()  # Establish new database connection
     brewlab = Spot(name="Legends", description="Legends: Bar and Grill is a bar.")
     insert_one(conn, "Spot", brewlab)
