@@ -4,3 +4,4 @@ requests
 pymongo
 pymongo[srv]
 black
+pymodm

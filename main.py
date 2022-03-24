@@ -1,15 +1,22 @@
 import json
+import urllib
+import os
 from dataclasses import dataclass
 from bson import ObjectId
 
 from flask import Flask, Response, jsonify
 
-from utils.db import Connection
+from pymongo import MongoClient
+from pymodm.connection import connect
+from dotenv import load_dotenv
 
+from utils.models import Spot, Review
+
+load_dotenv()
+CONN_STR = f"mongodb+srv://illinoislabs:{urllib.parse.quote_plus(os.environ['MONGO_PASSWORD'])}@spotsdb.vayoj.mongodb.net/{urllib.parse.quote_plus(os.environ['MONGO_DB'])}?retryWrites=true&w=majority"
+connect(CONN_STR)
+conn = MongoClient(CONN_STR)
 app = Flask(__name__)
-
-# Establish database connection
-conn = Connection()
 
 
 @dataclass
@@ -39,18 +46,18 @@ class JSONEncoder(json.JSONEncoder):
 @app.route("/")
 def index():
     payload = {
-        k: f"/{name.lower()}" for k, name in enumerate(conn.db.list_collection_names())
+        k: f"/{name.lower()}" for k, name in enumerate(conn["spots"].list_collection_names())
     }
     return FlaskResponse(jsonify({"documents": payload}), 200).to_resp()
 
 
-@app.route("/spot")
+@app.route("/spots")
 def spots():
     # Get list of all spots in the database
-    spots = conn.db["Spot"]
     encoder = JSONEncoder()
+    spots = [encoder.encode(x) for x in Spot.objects.all().values()]
     return FlaskResponse(
-        jsonify([encoder.encode(x) for x in spots.find()]), 200
+        jsonify(spots), 200
     ).to_resp()
 
 
