@@ -1,7 +1,7 @@
 import json
 import urllib
 import os
-from bson import json_util
+from bson import ObjectId
 
 from flask import Flask, Response, jsonify
 
@@ -15,6 +15,16 @@ CONN_STR = f"mongodb+srv://illinoislabs:{urllib.parse.quote_plus(os.environ['MON
 connect(CONN_STR)
 app = Flask(__name__)
 
+class JSONEncoder(json.JSONEncoder):
+    """
+    We create our own JSONEncoder to handle MongoDB IDs of type ObjectId
+    when serializing objects.
+    """
+    def default(self, o):
+        if isinstance(o, ObjectId):
+            return str(o)
+        return json.JSONEncoder.default(self, o)
+
 @app.route("/")
 def index():
     conn = _get_connection()
@@ -23,13 +33,12 @@ def index():
     }
     return jsonify({"documents": payload}), 200
 
-
 @app.route("/spots")
 def spots():
     # Get list of all spots in the database
-    spots = [x for x in Spot.objects.all().values()]
+    spots = list(Spot.objects.all().values())
     return Response(
-        response=json_util.dumps(spots),
+        response=JSONEncoder().encode(spots),
         status=200,
         mimetype="application/json"
     )
