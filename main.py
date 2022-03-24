@@ -3,7 +3,7 @@ import urllib
 import os
 from bson import ObjectId
 
-from flask import Flask, Response, jsonify
+from flask import Flask, Response, jsonify, request
 
 from pymodm.connection import connect, _get_connection
 from dotenv import load_dotenv
@@ -33,15 +33,61 @@ def index():
     }
     return jsonify({"documents": payload}), 200
 
-@app.route("/spots")
+
+@app.route("/api/spots", methods=["GET", "POST"])
 def spots():
-    # Get list of all spots in the database
-    spots = list(Spot.objects.all().values())
-    return Response(
-        response=JSONEncoder().encode(spots),
-        status=200,
-        mimetype="application/json"
-    )
+    if request.method == "POST":
+        # Post a spot to the database
+        body = request.json
+        if not "name" in body or not "description" in body:
+            return "Missing parameters", 400
+        spot = Spot(name=body["name"], description=body["description"])
+        spot.save()
+        return Response(
+            response=JSONEncoder().encode(spot.to_son().to_dict()),
+            status=200
+        )
+    else:
+        # Get list of all spots in the database
+        spots = [x for x in Spot.objects.all().values()]
+        return Response(
+            response=JSONEncoder().encode(spots),
+            status=200,
+            mimetype="application/json"
+        )
+
+@app.route("/api/spots/<id>", methods=["GET", "PUT", "DELETE"])
+def spot_by_id(id):
+    print(id)
+    if request.method == "PUT":
+        body = request.json
+        try:
+            spot = Spot.objects.get({"_id": ObjectId(id)})
+        except Spot.DoesNotExist:
+            return jsonify("Spot not found"), 404
+        if "name" in body:
+            spot.name = body["name"]
+        if "description" in body:
+            spot.description = body["description"]
+        spot.save()
+        return Response(
+            response=JSONEncoder().encode(spot.to_son().to_dict()),
+            status=200
+        )
+    elif request.method == "DELETE":
+        spot = Spot.objects.raw({"_id": ObjectId(id)})
+        spot.delete()
+        return "", 204
+    else:
+        try:
+            spot = Spot.objects.get({"_id": ObjectId(id)})
+            return Response(
+                    response=JSONEncoder().encode(spot.to_son().to_dict()),
+                    status=200,
+                    mimetype="application/json"
+                )
+        except Spot.DoesNotExist:
+            return jsonify("Spot not found"), 404
 
 
 if __name__ == "__main__":
