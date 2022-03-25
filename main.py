@@ -27,16 +27,7 @@ class JSONEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-def get_encoder():
-    if "encoder" not in g:
-        g.encoder = JSONEncoder()
-    return g.encoder
-
-
-def json_response(payload: str, status: int):
-    return Response(
-        response=get_encoder().encode(payload), status=status, mimetype="application/json"
-    )
+app.json_encoder = JSONEncoder
 
 
 @app.route("/")
@@ -46,7 +37,7 @@ def index():
         k: f"/{name.lower()}"
         for k, name in enumerate(conn.database.list_collection_names())
     }
-    return json_response({"documents": payload}, 200)
+    return jsonify({"documents": payload}), 200
 
 
 @app.route("/api/spots", methods=["GET", "POST"])
@@ -55,14 +46,14 @@ def spots():
         # Post a spot to the database
         body = request.json
         if not "name" in body or not "description" in body:
-            return json_response({"message": "Missing parameters"}, 400)
+            return jsonify({"message": "Missing parameters"}, 400)
         spot = Spot(name=body["name"], description=body["description"])
         spot.save()
-        return json_response(spot.to_son().to_dict(), 200)
+        return jsonify(spot.to_son().to_dict()), 200
     else:
         # Get list of all spots in the database
         spots = [x for x in Spot.objects.all().values()]
-        return json_response(spots, 200)
+        return jsonify(spots), 200
 
 
 @app.route("/api/spots/<id>", methods=["GET", "PUT", "DELETE"])
@@ -72,26 +63,26 @@ def spot_by_id(id):
         try:
             spot = Spot.objects.get({"_id": ObjectId(id)})
         except Spot.DoesNotExist:
-            return json_response({"message": "Spot not found"}, 404)
+            return jsonify({"message": "Spot not found"}), 404
         if "name" in body:
             spot.name = body["name"]
         if "description" in body:
             spot.description = body["description"]
         spot.save()
-        return json_response(spot.to_son().to_dict(), 200)
+        return jsonify(spot.to_son().to_dict()), 200
 
     elif request.method == "DELETE":
         spot = Spot.objects.raw({"_id": ObjectId(id)})
         spot.delete()
-        return json_response({"message": "Spot deleted"}, 204)
+        return jsonify({"message": "Spot deleted"}), 204
 
     else:
         try:
             spot = Spot.objects.get({"_id": ObjectId(id)})
-            return json_response(spot.to_son().to_dict(), 200)
+            return jsonify(spot.to_son().to_dict()), 200
 
         except Spot.DoesNotExist:
-            return json_response({"message": "Spot not found"}, 404)
+            return jsonify({"message": "Spot not found"}), 404
 
 
 if __name__ == "__main__":
