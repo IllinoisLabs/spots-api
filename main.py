@@ -2,12 +2,13 @@ import json
 import os
 import urllib
 
+
 from bson import ObjectId
 from dotenv import load_dotenv
 from flask import Flask, Response, g, jsonify, request
 from pymodm.connection import _get_connection, connect
-
 from utils.models import Review, Spot
+
 
 load_dotenv()
 CONN_STR = f"mongodb+srv://illinoislabs:{urllib.parse.quote_plus(os.environ['MONGO_PASSWORD'])}@spotsdb.vayoj.mongodb.net/{urllib.parse.quote_plus(os.environ['MONGO_DB'])}?retryWrites=true&w=majority"
@@ -26,7 +27,7 @@ class JSONEncoder(json.JSONEncoder):
             return str(o)
         return json.JSONEncoder.default(self, o)
 
-
+      
 app.json_encoder = JSONEncoder
 
 
