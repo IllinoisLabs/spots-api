@@ -2,7 +2,7 @@ from bson import ObjectId
 from flask import Blueprint, jsonify, request
 from pymodm.connection import _get_connection
 
-from utils.models import Review, Spot
+from src.utils.models import Review, Spot
 
 route_blueprint = Blueprint("route_blueprint", __name__)
 
@@ -22,8 +22,8 @@ def spots():
     if request.method == "POST":
         # Post a spot to the database
         body = request.json
-        if not "name" in body or not "description" in body:
-            return jsonify({"message": "Missing parameters"}, 400)
+        if not ("name" in body) or not ("description" in body):
+            return jsonify({"message": "Missing parameters"}), 400
         spot = Spot(name=body["name"], description=body["description"])
         spot.save()
         return jsonify(spot.to_son().to_dict()), 200
