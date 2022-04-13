@@ -5,3 +5,4 @@ pymongo
 pymongo[srv]
 black
 pymodm
+pytest

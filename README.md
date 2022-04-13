@@ -8,6 +8,9 @@ _“Talk is cheap. Show me the code.” - Linus Torvalds_
 2. Acquire `.env` file from Admin (Davis / Siraj), place in app root.
 3. Run `python3 main.py` to start the Flask server on [http://localhost:8000](http://localhost:8000).
 
+### Tests
+Run `pytest`
+
 ## API Interface
 ### Endpoints
 ```
