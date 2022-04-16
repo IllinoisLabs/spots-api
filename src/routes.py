@@ -33,9 +33,23 @@ def spots():
         return jsonify(spots), 200
 
 
-@route_blueprint.route("/api/spots/<id>", methods=["GET", "PUT", "DELETE"])
+@route_blueprint.route("/api/spots/<id>", methods=["GET", "PUT", "PATCH", "DELETE"])
 def spot_by_id(id):
     if request.method == "PUT":
+        body = request.json
+        spot = Spot(_id=id)
+        if "name" in body:
+            spot.name = body["name"]
+        if "description" in body:
+            spot.description = body["description"]
+        if "reviews" in body:
+            for review in body["reviews"]:
+                reviewModel = Review(author=review["author"], rating=review["rating"])
+                spot.reviews.append(reviewModel)
+        spot.save()
+        return jsonify(spot.to_son().to_dict()), 200
+
+    elif request.method == "PATCH":
         body = request.json
         try:
             spot = Spot.objects.get({"_id": ObjectId(id)})
@@ -45,6 +59,11 @@ def spot_by_id(id):
             spot.name = body["name"]
         if "description" in body:
             spot.description = body["description"]
+        if "reviews" in body:
+            spot.reviews = []
+            for review in body["reviews"]:
+                reviewModel = Review(author=review["author"], rating=review["rating"])
+                spot.reviews.append(reviewModel)
         spot.save()
         return jsonify(spot.to_son().to_dict()), 200
 
